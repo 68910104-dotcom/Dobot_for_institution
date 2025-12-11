@@ -1,4 +1,4 @@
-## เตือน ต้องโหลด Model P2LDGAN ก่อนนะ >> https://drive.google.com/drive/folders/14Pz5J396x9xennXdilIoOowLOL4KVKWS?usp=sharing
+## เตือน ต้องโหลด Model P2LDGAN ก่อนนะ >> https://drive.google.com/file/d/1P64Yqociu704vkBJ1HT1qfYBNqnMUPaG/view?usp=sharing
 ------------------------------------------------------------------------
  โครงสร้างไฟล์และโฟลเดอร์ (Project Structure)
 ------------------------------------------------------------------------
@@ -76,4 +76,5 @@
 - หากหุ่นยนต์วาดเลยขอบกระดาษ: ให้ตรวจสอบการ Calibration ใหม่ ให้มั่นใจว่าตำแหน่ง 4 มุมถูกต้อง
 
 - หากภาพไม่แปลงเป็นการ์ตูน: ตรวจสอบในโฟลเดอร์ `png_to_cartoon` ว่ามีไฟล์โมเดล AI ครบถ้วนหรือไม่
+
 
