@@ -6,11 +6,23 @@ import serial.tools.list_ports
 
 # --------------------- Dobot Setup ---------------------
 def find_dobot_port():
-    ports = list(serial.tools.list_ports.comports())
+    import serial.tools.list_ports
+    ports = serial.tools.list_ports.comports()
+    print("\n🔍 DEBUG: รายชื่อ Port ที่เจอ (Auto):")
     for p in ports:
-        if "USB" in p.description or "wchusbserial" in p.device.lower():
+        print(f"   - Device: {p.device}, Desc: {p.description}")
+        if not hasattr(p, 'description') or not hasattr(p, 'device'): continue
+        is_dobot = "USB" in p.description.upper() or \
+                   "SERIAL" in p.description.upper() or \
+                   "CH340" in p.description.upper() or \
+                   "CP210" in p.description.upper() or \
+                   "USB" in p.device.upper()
+        if is_dobot:
+            print(f" เลือกใช้ Port: {p.device}")
             return p.device
+    print(" ไม่พบ Port ที่เข้าข่าย")
     return None
+
 
 dobot_port = find_dobot_port()
 if not dobot_port:
