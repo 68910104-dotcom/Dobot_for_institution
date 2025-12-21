@@ -1,3 +1,9 @@
-Flask
-pydobot
+flask
+flask-cors
+numpy
+opencv-python
 pyserial
+pydobot
+matplotlib
+torch
+torchvision
