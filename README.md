@@ -1,4 +1,4 @@
-# Dobot Control Project Collection
+# Dobot for institution
 
 โปรเจกต์รวบรวมระบบควบคุมแขนกล **Dobot** หลากหลายรูปแบบ ตั้งแต่การใช้ AI ตรวจจับภาพ ไปจนถึงการควบคุมผ่านเครือข่าย Web Application
 
