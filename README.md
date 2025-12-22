@@ -1,49 +1,42 @@
-# 🤖 Dobot Voice Control System (Thai/English Supported)
+# Dobot Control Project Collection
 
-This project controls a **Dobot Magician** robotic arm using voice commands. It features a hybrid language system (Thai & English), fuzzy logic for error correction, and a teach-and-replay memory mode.
+โปรเจกต์รวบรวมระบบควบคุมแขนกล **Dobot** หลากหลายรูปแบบ ตั้งแต่การใช้ AI ตรวจจับภาพ ไปจนถึงการควบคุมผ่านเครือข่าย Web Application
 
-## ✨ Features
+---
 
-* **🎙️ Voice Control:** Control X, Y, Z, R axes movement via microphone.
-* **🇹🇭 Hybrid Language:** Supports both **Thai** and **English** commands simultaneously.
-* **🧠 Smart Fuzzy Logic:** Automatically corrects misheard words (e.g., *Leaf* $\rightarrow$ **Left**, *ทราย* $\rightarrow$ **ซ้าย**).
-* **💨 Suction System:** Toggle the suction cup (Air Pump) ON/OFF.
-* **💾 Memory Mode (Teach & Play):**
-    * **Save:** Record the current coordinate.
-    * **Play:** Replay the sequence of recorded coordinates (Automation).
-    * **Clear:** Reset the memory.
+##  รายละเอียดแต่ละโปรเจกต์
 
-## 🛠️ Hardware Requirements
+### 1. dobot_color_catigorize
+**ระบบคัดแยกวัตถุตามสี**
+* **คำอธิบาย:** ใช้เซนเซอร์หรือกล้องในการจำแนกสีของวัตถุ และสั่งการให้แขนกลย้ายวัตถุไปยังตำแหน่งที่กำหนด (Sorting)
+* **เทคโนโลยีที่ใช้:** Color Sensing, Image Processing
 
-1.  **Dobot Magician** (Robotic Arm)
-2.  **Suction Cup Kit** (Air pump + Suction head)
-3.  **Computer/Laptop** (Windows recommended)
-4.  **Microphone**
-5.  **USB Cable**
+### 2. dobot_gesture_control_system
+**ระบบควบคุมด้วยท่าทาง**
+* **คำอธิบาย:** ตรวจจับท่าทางมือ (Hand Gestures) ผ่านกล้องเพื่อสั่งการแขนกล เช่น การจีบนิ้วเพื่อสั่งคีบ หรือการเลื่อนมือเพื่อย้ายตำแหน่ง
+* **เทคโนโลยีที่ใช้:** Computer Vision (MediaPipe/OpenCV), Machine Learning
 
-## ⚙️ Installation
+### 3. Dobot_voice_control
+**ระบบสั่งการด้วยเสียง**
+* **คำอธิบาย:** รับคำสั่งเสียงจากผู้ใช้แล้วแปลงเป็นชุดคำสั่งควบคุมแขนกล (เช่น "หยิบของ", "วาง", "กลับจุดเริ่มต้น")
+* **เทคโนโลยีที่ใช้:** Speech-to-Text (STT), Natural Language Processing
 
-1.  **Prerequisites:**
-    * Python 3.10 or 3.11 is recommended.
-    * Git (Optional)
+### 4. dobot_web_drawing
+**ระบบวาดภาพผ่านเว็บอินเทอร์เฟซ**
+* **คำอธิบาย:** หน้าเว็บสำหรับวาดรูปหรือลากเส้น โดยพิกัดการวาดจะถูกส่งไปให้ Dobot วาดลงบนกระดาษจริงอย่างแม่นยำ
+* **เทคโนโลยีที่ใช้:** HTML5 Canvas, WebSocket/HTTP API
 
-2.  **Install Dependencies:**
-    ```bash
-    pip install pydobot pyserial SpeechRecognition sounddevice numpy scipy
-    ```
+### 5. dobt_move_web
+**ระบบควบคุมการเคลื่อนที่ผ่านเว็บ**
+* **คำอธิบาย:** Dashboard บนเบราว์เซอร์สำหรับควบคุมการเคลื่อนที่ของ Dobot ในแนวแกน X, Y, Z และการเปิด-ปิดอุปกรณ์เสริม (Gripper/Suction Cup)
+* **เทคโนโลยีที่ใช้:** Web Control Interface, Flask/FastAPI (Backend)
 
-3.  **Driver Setup:**
-    * Ensure the **Silicon Labs CP210x USB to UART Bridge** driver is installed.
+---
 
-4.  **Configuration:**
-    * Open `voice_control.py`.
-    * Edit the `PORT` variable to match your Dobot's port (Check Device Manager).
-    ```python
-    PORT = "COM3"  # Example: COM3, COM4
-    ```
+## 🛠 การเตรียมความพร้อมก่อนใช้งาน (Prerequisites)
 
-## 🎮 Usage
-
-Run the main script:
-```bash
-python voice_control.py
+1. **Hardware:** เชื่อมต่อ Dobot เข้ากับคอมพิวเตอร์ผ่านสาย USB
+2. **Driver:** ติดตั้ง Dobot Driver และตรวจสอบ COM Port ให้ถูกต้อง
+3. **Libraries:** ติดตั้ง Library พื้นฐาน (ตัวอย่าง)
+   ```bash
+   pip install pydobot opencv-python Flask
