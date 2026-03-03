@@ -7,3 +7,4 @@ pydobot
 matplotlib
 torch
 torchvision
+timm

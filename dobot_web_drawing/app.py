@@ -21,7 +21,7 @@ try:
         PEN_DOWN_Z, PEN_UP_Z, TEST_PARAMS
     )
 except ImportError:
-    print("❌ ไม่พบไฟล์ dobot_drawing_logic.py")
+    print(" ไม่พบไฟล์ dobot_drawing_logic.py")
     exit()
 
 app = Flask(__name__) 
@@ -31,8 +31,8 @@ UPLOAD_FOLDER = 'static/mobile_uploads'
 OUTPUT_FOLDER = 'static/processed' 
 RAW_UPLOAD_FOLDER = 'static/mobile_uploads' 
 
-# ⭐️ Path สำหรับโหลดไฟล์ Config ภายนอก
-EXTERNAL_CALIBRATION_PATH = '/Users/student/Desktop/dobot_web_app/dobot_calibration.json'
+#  Path สำหรับโหลดไฟล์ Config ภายนอก
+EXTERNAL_CALIBRATION_PATH = '/Users/pongsathon/Desktop/visionlab_dobot/Dobot_for_institution/dobot_web_drawing/dobot_calibration.json'
 
 ddl.OUTPUT_DIR_BASE = OUTPUT_FOLDER 
 
@@ -62,8 +62,8 @@ processed_data = {
     "original_image_name": None 
 }
 
-DFCALL_SCRIPT_PATH = '/Users/student/Desktop/research dobot/dfcall/512_use/dfcall.py'
-DFCALL_OUTPUT_IMAGE_PATH = '/Users/student/Desktop/research dobot/dfcall/512_use/stitched_cartoon_512x512.jpg'
+DFCALL_SCRIPT_PATH = '/Users/pongsathon/Desktop/visionlab_dobot/Dobot_for_institution/dobot_web_drawing/png_to_cartoon/draw_cartoon_df.py' # path เรียกใช้แปลงรูป
+DFCALL_OUTPUT_IMAGE_PATH = '/Users/pongsathon/Desktop/visionlab_dobot/Dobot_for_institution/dobot_web_drawing/png_to_cartoon/stitched_cartoon_512x512.jpg' # output image
 DFCALL_DIR = os.path.dirname(DFCALL_SCRIPT_PATH)
 
 # --- ⭐️ ฟังก์ชันหา IP Address ---
@@ -81,10 +81,10 @@ def get_ip():
 MY_IP = get_ip()
 PORT = 5001
 
-# --- ⭐️ ฟังก์ชัน Kill Port ⭐️ ---
+# ---  ฟังก์ชัน Kill Port  ---
 def kill_port(port):
     """ค้นหาและปิด Process ที่ใช้งาน Port นั้นอยู่"""
-    print(f"🔍 กำลังตรวจสอบ Port {port}...")
+    print(f" กำลังตรวจสอบ Port {port}...")
     try:
         # หา PID ของโปรแกรมที่ใช้ Port นี้อยู่
         cmd = f"lsof -t -i :{port}"
@@ -93,13 +93,13 @@ def kill_port(port):
         for pid in pid_list:
             if pid:
                 pid = int(pid)
-                print(f"⚠️ เจอ Process ค้างอยู่ (PID: {pid}) กำลังสั่ง Kill...")
+                print(f" เจอ Process ค้างอยู่ (PID: {pid}) กำลังสั่ง Kill...")
                 os.kill(pid, signal.SIGKILL) # สั่งปิดทันที
-                print(f"✅ กำจัด Process {pid} เรียบร้อยแล้ว")
+                print(f" กำจัด Process {pid} เรียบร้อยแล้ว")
     except subprocess.CalledProcessError:
-        print(f"✅ Port {port} ว่างอยู่ เริ่มรันได้เลย")
+        print(f" Port {port} ว่างอยู่ เริ่มรันได้เลย")
     except Exception as e:
-        print(f"❌ เกิดข้อผิดพลาดในการ Kill port: {e}")
+        print(f" เกิดข้อผิดพลาดในการ Kill port: {e}")
 # --------------------------------------------------------
 
 @app.route('/')
@@ -132,7 +132,7 @@ def quick_upload():
             "filenames": saved_files
         })
     except Exception as e:
-        print(f"❌ Upload error: {e}")
+        print(f" Upload error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/connect', methods=['POST'])
@@ -148,7 +148,7 @@ def connect_dobot():
         bot.speed(DOBOT_SPEED, DOBOT_ACCELERATION)
         drawing_state["status"] = "idle"
         drawing_state["message"] = "Connected"
-        print(f"✅ Dobot connected at {port}")
+        print(f" Dobot connected at {port}")
         return jsonify({"status": "success", "message": "Connected", "port": port, "model": "Dobot Magician"}), 200
     except Exception as e:
         drawing_state["message"] = f"Connection failed: {e}"
@@ -159,7 +159,7 @@ def disconnect_dobot():
     global bot
     if bot:
         try: bot.close()
-        except Exception as e: print(f"⚠️ Error closing dobot: {e}")
+        except Exception as e: print(f" Error closing dobot: {e}")
         bot = None
     drawing_state["status"] = "idle"
     drawing_state["message"] = "Disconnected"
@@ -186,7 +186,7 @@ def set_paper_corners():
         return jsonify({"status": "success", "message": "Corners set and saved"})
     except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
-# ⭐️ Route ใหม่: โหลด Config จาก Path ภายนอก
+#  Route ใหม่: โหลด Config จาก Path ภายนอก
 @app.route('/load_external_config', methods=['POST'])
 def load_external_config():
     try:
@@ -201,7 +201,7 @@ def load_external_config():
                     # อัปเดตค่าในตัวแปรระบบ
                     ddl.PAPER_CORNERS = np.float32(corners_list)
                     
-                    print(f"✅ Loaded External Calibration from: {EXTERNAL_CALIBRATION_PATH}")
+                    print(f" Loaded External Calibration from: {EXTERNAL_CALIBRATION_PATH}")
                     return jsonify({
                         "status": "success", 
                         "message": "External config loaded successfully",
@@ -239,15 +239,15 @@ def process_image():
         original_image_name = f"original_{file.filename}"
         original_image_path = os.path.join(UPLOAD_FOLDER, original_image_name)
         file.save(original_image_path)
-        print(f"🖼️  Saved original image to {original_image_path}")
+        print(f"  Saved original image to {original_image_path}")
         
         processed_data["original_image_name"] = original_image_name 
 
         python_executable = sys.executable 
         input_image_full_path = os.path.abspath(original_image_path)
-        command = [python_executable, DFCALL_SCRIPT_PATH, input_image_full_path]
+        command = [python_executable, DFCALL_SCRIPT_PATH, input_image_full_path, DFCALL_DIR]
         
-        print(f"✅ Subprocess: กำลังรันสคริปต์ (Detached)...")
+        print(f" Subprocess: กำลังรันสคริปต์ (Detached)...")
         
         subprocess.Popen(
             command,
@@ -257,18 +257,18 @@ def process_image():
             start_new_session=True 
         )
         
-        print(f"--- [app.py] DFCall is running in background. ---")
+        print(f"--- [app.py] draw_cartoon is running in background. ---")
         
-        drawing_state["message"] = "Processing DFCall... (Polling)"
+        drawing_state["message"] = "Processing draw_cartoon... (Polling)"
         return jsonify({
             "status": "processing_started",
-            "message": "DFCall started. Polling for result..."
+            "message": "draw_cartoon started. Polling for result..."
         })
 
     except Exception as e:
         drawing_state["status"] = "idle"
         drawing_state["message"] = f"Error: {e}"
-        print(f"❌ /process_image Error (Pre-run): {e}")
+        print(f" /process_image Error (Pre-run): {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -280,7 +280,7 @@ def check_processing():
         if not os.path.exists(DFCALL_OUTPUT_IMAGE_PATH):
             return jsonify({"status": "processing", "message": "DFCall is running..."})
 
-        print(f"✅ DFCall Success: พบไฟล์ผลลัพธ์!")
+        print(f"draw_cartoon Success: พบไฟล์ผลลัพธ์!")
         drawing_state["message"] = "DFCall complete. Processing comparison..."
         
         run_dir = processed_data["current_run_dir"]
@@ -291,7 +291,7 @@ def check_processing():
         shutil.copy(DFCALL_OUTPUT_IMAGE_PATH, bw_image_path)
         os.remove(DFCALL_OUTPUT_IMAGE_PATH) 
         
-        print(f"⬛️⬜️ คัดลอกภาพ (dfcall) มาที่: {bw_image_path}")
+        print(f"⬛ คัดลอกภาพมาที่: {bw_image_path}")
         
         img_color = cv2.imread(bw_image_path)
         if img_color is None:
@@ -313,7 +313,7 @@ def check_processing():
             ddl.TEST_PARAMS, 
             run_dir 
         )
-        print(f"📊 Saved comparison sheet to {comparison_image_path}")
+        print(f" Saved comparison sheet to {comparison_image_path}")
 
         drawing_state["status"] = "idle"
         drawing_state["message"] = "Ready for parameter selection"
@@ -329,10 +329,10 @@ def check_processing():
     except Exception as e:
         drawing_state["status"] = "idle"
         drawing_state["message"] = f"Error: {e}"
-        print(f"❌ /check_processing Error: {e}")
+        print(f" /check_processing Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# ⭐️ API ใหม่: สำหรับ Preview ภาพสดๆ (ไม่เซฟไฟล์) ⭐️
+# API ใหม่: สำหรับ Preview ภาพสดๆ (ไม่เซฟไฟล์) 
 @app.route('/preview_parameters', methods=['POST'])
 def preview_parameters():
     global processed_data
@@ -382,7 +382,7 @@ def preview_parameters():
         })
 
     except Exception as e:
-        print(f"❌ Preview Error: {e}")
+        print(f" Preview Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -392,7 +392,7 @@ def select_parameters():
     data = request.json
     choice_index = data.get('choice_index')
     
-    # ⭐️ รับค่า Override จาก Frontend
+    #  รับค่า Override จาก Frontend
     custom_epsilon = data.get('epsilon')
     custom_min_area = data.get('min_area')
     custom_merge = data.get('merge_threshold')
@@ -408,12 +408,12 @@ def select_parameters():
         selected_params = TEST_PARAMS[choice_index]
         name, blur, block, c, eps, min_area = selected_params
         
-        # ⭐️ Logic: ถ้ามีค่าส่งมาให้ใช้ค่าที่ส่งมา ถ้าไม่มีให้ใช้ค่าจาก Preset
+        # Logic: ถ้ามีค่าส่งมาให้ใช้ค่าที่ส่งมา ถ้าไม่มีให้ใช้ค่าจาก Preset
         final_eps = float(custom_epsilon) if custom_epsilon is not None else eps
         final_min_area = float(custom_min_area) if custom_min_area is not None else min_area
         final_merge = float(custom_merge) if custom_merge is not None else ddl.MERGE_DISTANCE_THRESHOLD
 
-        print(f"⚙️ Generating Paths: {name} | Eps: {final_eps} | Area: {final_min_area} | Merge: {final_merge}")
+        print(f" Generating Paths: {name} | Eps: {final_eps} | Area: {final_min_area} | Merge: {final_merge}")
         
         preview_img_bgr, filtered_contours, total_length_mm = ddl.process_and_draw_contours(
             processed_data["img_gray_resized"].copy(),
@@ -431,7 +431,7 @@ def select_parameters():
         run_dir_basename = os.path.basename(processed_data["current_run_dir"])
         lineart_path = os.path.join(processed_data["current_run_dir"], "final_lineart.jpg")
         cv2.imwrite(lineart_path, preview_img_bgr)
-        print(f"✒️ Saved final lineart to {lineart_path}")
+        print(f" Saved final lineart to {lineart_path}")
 
         drawing_state["message"] = "Generating all_steps previews..."
         base_bgr = processed_data["base_bgr_image"]
@@ -448,7 +448,7 @@ def select_parameters():
             output_all_steps_path=all_steps_dir,
             output_current_run_path=current_run_dir
         )
-        print(f"✅ Generated {len(filtered_contours)} all_steps images in {all_steps_dir}")
+        print(f" Generated {len(filtered_contours)} all_steps images in {all_steps_dir}")
         img_h, img_w = processed_data["img_gray_resized"].shape 
         img_corners = np.float32([[0, 0], [img_w-1, 0], [img_w-1, img_h-1], [0, img_h-1]])
         current_paper_corners = ddl.load_calibration() 
@@ -478,7 +478,7 @@ def select_parameters():
     except Exception as e:
         drawing_state["status"] = "idle"
         drawing_state["message"] = f"Error: {e}"
-        print(f"❌ /select_parameters Error: {e}")
+        print(f" /select_parameters Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_y):
@@ -499,7 +499,7 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
         total_length_to_draw = sum(lengths_to_draw)
         start_index = start_contour_index - 1
         if start_index != 0:
-            print(f"🔄 Re-ordering drawing. Starting at {start_contour_index}")
+            print(f" Re-ordering drawing. Starting at {start_contour_index}")
             contours_to_draw = contours_to_draw[start_index:] + contours_to_draw[:start_index]
             paths_to_draw = paths_to_draw[start_index:] + paths_to_draw[:start_index]
             lengths_to_draw = lengths_to_draw[start_index:] + lengths_to_draw[:start_index]
@@ -513,12 +513,12 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
         progress_img_path = os.path.join(current_run_dir, "current_progress_drawing.jpg")
         progress_img_url_base = f"{OUTPUT_FOLDER}/{run_dir_basename}/current_progress_drawing.jpg".replace(os.path.sep, '/')
 
-        print(f"🚀 Start Drawing: {total_contours} contours, Total Length: {total_length_to_draw:.2f} mm")
+        print(f" Start Drawing: {total_contours} contours, Total Length: {total_length_to_draw:.2f} mm")
 
         for i in range(total_contours):
             if drawing_state["stop_flag"]:
                 drawing_state["message"] = "Drawing stopped"
-                print("🛑 Drawing interrupted by User.")
+                print(" Drawing interrupted by User.")
                 break
             while drawing_state["status"] == "paused":
                 if drawing_state["stop_flag"]:
@@ -547,7 +547,7 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
             drawing_state["message"] = f"Drawing {ci_loop}/{total_contours} (Orig #{ci_original}) | {eta_display}"
             
             elapsed_now = time.time() - start_time
-            print(f"🖌️ [{elapsed_now:.1f}s] Drawing Contour {ci_loop}/{total_contours} (Len: {lengths_to_draw[i]:.1f}mm) | Total: {percent_done:.1f}% | {eta_display}")
+            print(f" [{elapsed_now:.1f}s] Drawing Contour {ci_loop}/{total_contours} (Len: {lengths_to_draw[i]:.1f}mm) | Total: {percent_done:.1f}% | {eta_display}")
 
             sx, sy = pts_transformed[0][0]
             ddl.safe_move(bot, sx, sy, pen_up_z, wait=False)
@@ -560,7 +560,7 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
             ddl.safe_move(bot, x_last, y_last, pen_up_z, wait=False) 
         
         if drawing_state["stop_flag"]:
-            print("🛑 Drawing stopped by user.")
+            print("Drawing stopped by user.")
             drawing_state["message"] = "Drawing stopped"
             bot.stop_queue()
             bot.clear_queue()
@@ -580,8 +580,8 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
             time_str += f"{seconds}s"
             
             print("\n" + "="*50)
-            print(f"🎉 Drawing Finished Successfully!")
-            print(f"⏱️  Total Drawing Time: {time_str} ({total_seconds:.2f} seconds)")
+            print(f"Drawing Finished Successfully!")
+            print(f"Total Drawing Time: {time_str} ({total_seconds:.2f} seconds)")
             print("="*50 + "\n")
             drawing_state["message"] = "Drawing complete!"
             drawing_state["progress"] = 100
@@ -592,7 +592,7 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
             drawing_state["progress_image_url"] = f"{progress_img_url_base}?t={time.time()}"
         ddl.safe_move(bot, home_x, home_y, pen_up_z, wait=True) 
     except Exception as e:
-        print(f"❌ ERROR in drawing thread: {e}")
+        print(f"ERROR in drawing thread: {e}")
         drawing_state["status"] = "error"
         drawing_state["message"] = f"Error: {e}"
     finally:
@@ -674,11 +674,11 @@ def stop_drawing():
     drawing_state["stop_flag"] = True 
     if drawing_state["status"] == "paused":
         drawing_state["status"] = "drawing" 
-    print("🛑 Stop signal sent.")
+    print("Stop signal sent.")
     return jsonify({"status": "success", "message": "Stop signal sent"})
 
 if __name__ == '__main__':
-    # ⭐️ เรียกใช้ฟังก์ชัน Kill Port ก่อนรัน App ⭐️
+    # เรียกใช้ฟังก์ชัน Kill Port ก่อนรัน App
     kill_port(PORT) 
     
     print("======================================================")

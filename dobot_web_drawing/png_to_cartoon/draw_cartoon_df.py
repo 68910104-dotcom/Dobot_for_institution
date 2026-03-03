@@ -25,7 +25,7 @@ def process_cartoon_gan(input_path, output_dir):
     
     # --- การตั้งค่าโมเดล (โหลดครั้งเดียว) ---
     #  แก้ไข path นี้ให้ตรงกับเครื่อง Server ของคุณ
-    model_path = r"E:\P2LDGAN\p2ldgan_generator_200.pth" 
+    model_path = r"/Users/pongsathon/Desktop/visionlab_dobot/Dobot_for_institution/dobot_web_drawing/png_to_cartoon/p2ldgan_generator_200.pth" 
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"[Cartoon] Using device: {device}")
@@ -89,8 +89,9 @@ def process_cartoon_gan(input_path, output_dir):
             
             # บันทึกไฟล์
             # ตั้งชื่อไฟล์ใหม่ เช่น cartoon_inputname.jpg
-            save_name = f"cartoon_{filename}"
-            output_filename = os.path.join(output_dir, save_name)
+            output_filename = "/Users/pongsathon/Desktop/visionlab_dobot/Dobot_for_institution/dobot_web_drawing/png_to_cartoon/stitched_cartoon_512x512.jpg"
+            output_img.save(output_filename)
+            
             
             output_img.save(output_filename)
             print(f"   Processed: {filename} -> {save_name}")
