@@ -16,4 +16,4 @@ try:
     print("เคลื่อนที่เสร็จสิ้น")
 
 finally:
-    device.close()
+    device.close() # hi hi
