@@ -8,9 +8,10 @@ import subprocess
 import sys
 import socket 
 import base64
-import signal # ⭐️ สำหรับสั่งปิด Process
+import signal # สำหรับสั่งปิด Process
 from flask import Flask, jsonify, request, send_from_directory, render_template
 from flask_cors import CORS
+from threading import Lock
 import numpy as np
 import cv2
 
@@ -42,6 +43,7 @@ os.makedirs(RAW_UPLOAD_FOLDER, exist_ok=True)
 
 bot = None
 drawing_thread = None
+drawing_state_lock = Lock()  # Thread lock for drawing state
 drawing_state = {
     "status": "idle", 
     "message": "Disconnected",
@@ -66,7 +68,7 @@ DFCALL_SCRIPT_PATH = '/Users/pongsathon/Desktop/visionlab_dobot/Dobot_for_instit
 DFCALL_OUTPUT_IMAGE_PATH = '/Users/pongsathon/Desktop/visionlab_dobot/Dobot_for_institution/dobot_web_drawing/png_to_cartoon/stitched_cartoon_512x512.jpg' # output image
 DFCALL_DIR = os.path.dirname(DFCALL_SCRIPT_PATH)
 
-# --- ⭐️ ฟังก์ชันหา IP Address ---
+# --- ฟังก์ชันหา IP Address ---
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -182,7 +184,7 @@ def set_paper_corners():
         corners_list = [corners_dict['tl'], corners_dict['tr'], corners_dict['br'], corners_dict['bl']] 
         with open(ddl.CALIBRATION_FILE, 'w') as f: json.dump(corners_list, f, indent=4)
         ddl.PAPER_CORNERS = np.float32(corners_list)
-        print(f"✅ New calibration saved: {corners_list}")
+        print(f" New calibration saved: {corners_list}")
         return jsonify({"status": "success", "message": "Corners set and saved"})
     except Exception as e: return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -228,7 +230,7 @@ def process_image():
 
     try:
         if os.path.exists(DFCALL_OUTPUT_IMAGE_PATH):
-            print(f"🧹 Clearing old output file: {DFCALL_OUTPUT_IMAGE_PATH}")
+            print(f"Clearing old output file: {DFCALL_OUTPUT_IMAGE_PATH}")
             os.remove(DFCALL_OUTPUT_IMAGE_PATH)
             
         run_dir = ddl.get_next_experiment_dir() 
@@ -291,7 +293,7 @@ def check_processing():
         shutil.copy(DFCALL_OUTPUT_IMAGE_PATH, bw_image_path)
         os.remove(DFCALL_OUTPUT_IMAGE_PATH) 
         
-        print(f"⬛ คัดลอกภาพมาที่: {bw_image_path}")
+        print(f"คัดลอกภาพมาที่: {bw_image_path}")
         
         img_color = cv2.imread(bw_image_path)
         if img_color is None:
@@ -476,18 +478,17 @@ def select_parameters():
             "total_contours": len(filtered_contours)
         })
     except Exception as e:
-        drawing_state["status"] = "idle"
-        drawing_state["message"] = f"Error: {e}"
         print(f" /select_parameters Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_y):
     global drawing_state, processed_data
     try:
-        drawing_state["status"] = "drawing"
-        drawing_state["message"] = "Initializing..."
-        drawing_state["progress"] = 0
-        drawing_state["stop_flag"] = False
+        with drawing_state_lock:
+            drawing_state["status"] = "drawing"
+            drawing_state["message"] = "Initializing..."
+            drawing_state["progress"] = 0
+            drawing_state["stop_flag"] = False
         base_bgr = processed_data["base_bgr_image"]
         current_run_dir = processed_data["current_run_dir"]
         run_dir_basename = os.path.basename(current_run_dir)
@@ -542,20 +543,22 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
             
             current_length_drawn += lengths_to_draw[i]
             percent_done = (current_length_drawn / total_length_to_draw) * 100 if total_length_to_draw > 0 else 0
-            drawing_state["progress"] = round(percent_done, 1)
+            percent_done = float(round(percent_done, 1))
+            drawing_state["progress"] = percent_done
             eta_display = ddl.get_eta_display(start_time, current_length_drawn, total_length_to_draw)
             drawing_state["message"] = f"Drawing {ci_loop}/{total_contours} (Orig #{ci_original}) | {eta_display}"
             
             elapsed_now = time.time() - start_time
             print(f" [{elapsed_now:.1f}s] Drawing Contour {ci_loop}/{total_contours} (Len: {lengths_to_draw[i]:.1f}mm) | Total: {percent_done:.1f}% | {eta_display}")
-
             sx, sy = pts_transformed[0][0]
             ddl.safe_move(bot, sx, sy, pen_up_z, wait=False)
             ddl.safe_move(bot, sx, sy, pen_down_z, wait=True) 
             x_last, y_last = sx, sy 
             for p in pts_transformed[1:]:
                 x_last, y_last = p[0] 
-                ddl.safe_move(bot, x_last, y_last, pen_down_z, wait=False) 
+                ddl.safe_move(bot, x_last, y_last, pen_down_z, wait=False)
+                # Small delay to allow Flask to respond to progress requests
+                time.sleep(0.01) 
             ddl.safe_move(bot, x_last, y_last, pen_down_z, wait=True)
             ddl.safe_move(bot, x_last, y_last, pen_up_z, wait=False) 
         
@@ -584,7 +587,7 @@ def drawing_thread_task(start_contour_index, pen_down_z, pen_up_z, home_x, home_
             print(f"Total Drawing Time: {time_str} ({total_seconds:.2f} seconds)")
             print("="*50 + "\n")
             drawing_state["message"] = "Drawing complete!"
-            drawing_state["progress"] = 100
+            drawing_state["progress"] = 100.0
             ddl.update_current_progress_image(
                 base_bgr, contours_to_draw, total_contours + 1, is_final=True,
                 output_filename=progress_img_path
@@ -630,7 +633,7 @@ def start_drawing():
         
         current_paper_corners = ddl.load_calibration()
         home_x, home_y = current_paper_corners[0] 
-        print(f"▶️ Starting drawing... Speed: {speed_percent}% ({dobot_speed_val:.0f}), Start: #{start_contour}")
+        print(f"Starting drawing... Speed: {speed_percent}% ({dobot_speed_val:.0f}), Start: #{start_contour}")
         
         print(f"--- Z-HEIGHT DEBUG ---")
         print(f"  Base PEN_DOWN_Z (from Logic): {ddl.PEN_DOWN_Z}")
@@ -649,7 +652,8 @@ def start_drawing():
 
 @app.route('/progress', methods=['GET'])
 def get_progress():
-    return jsonify(drawing_state)
+    with drawing_state_lock:
+        return jsonify(drawing_state.copy())  # Return copy to prevent modification
 
 @app.route('/pause', methods=['POST'])
 def pause_drawing():
@@ -657,7 +661,7 @@ def pause_drawing():
         drawing_state["status"] = "paused"
         drawing_state["message"] = "Paused"
         # bot.pause(True)
-        print("⏸️ Drawing paused")
+        print("Drawing paused")
     return jsonify({"status": "success", "message": "Paused"})
 
 @app.route('/resume', methods=['POST'])
@@ -666,7 +670,7 @@ def resume_drawing():
         drawing_state["status"] = "drawing"
         drawing_state["message"] = "Resuming..."
         # bot.pause(False)
-        print("▶️ Drawing resumed")
+        print("Drawing resumed")
     return jsonify({"status": "success", "message": "Resumed"})
 
 @app.route('/stop', methods=['POST'])
@@ -682,8 +686,8 @@ if __name__ == '__main__':
     kill_port(PORT) 
     
     print("======================================================")
-    print(" 🤖 Dobot Drawing Web Server 🤖")
-    print(f" 🌍 Local: http://127.0.0.1:{PORT}") 
-    print(f" 📲 Mobile: http://{MY_IP}:{PORT}") 
+    print(" Dobot Drawing Web Server")
+    print(f" Local: http://127.0.0.1:{PORT}") 
+    print(f" Mobile: http://{MY_IP}:{PORT}") 
     print("======================================================")
     app.run(host='0.0.0.0', port=PORT, debug=False)

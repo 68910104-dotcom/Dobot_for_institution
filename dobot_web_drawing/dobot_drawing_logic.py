@@ -1,4 +1,4 @@
-# --- ⭐️ บังคับใช้โหมด Agg (Non-GUI) เพื่อป้องกันเซิร์ฟเวอร์แครช ⭐️ ---
+# --- บังคับใช้โหมด Agg (Non-GUI) เพื่อป้องกันเซิร์ฟเวอร์แครช ---
 import matplotlib
 matplotlib.use('Agg')
 # --------------------------------------------------
@@ -27,8 +27,8 @@ EXP_PREFIX = 'exp_'
 IMAGE_MAX_SIZE = 1000
 
 # ระดับปากกา (ปรับตามความเหมาะสมของเครื่องคุณ)
-PEN_DOWN_Z = -45   # จุดจรดกระดาษ
-PEN_UP_Z = -40     # ⭐️ ยกขึ้นแค่นิดเดียว (5mm) เพื่อความเร็ว
+PEN_DOWN_Z = -65   # จุดจรดกระดาษ
+PEN_UP_Z = -60     # ยกขึ้นแค่นิดเดียว (5mm) เพื่อความเร็ว
 
 RETRY_ATTEMPTS = 3
 
@@ -36,17 +36,17 @@ RETRY_ATTEMPTS = 3
 DOBOT_SPEED = 4000      
 DOBOT_ACCELERATION = 3000
 
-# ⭐️ ลดความละเอียดลงนิดนึง เพื่อให้วาดลื่นไหล (ไม่กระตุก)
+#  ลดความละเอียดลงนิดนึง เพื่อให้วาดลื่นไหล (ไม่กระตุก)
 EPSILON = 0.0020
 
-# ⭐️ ตัดเส้นขยะเล็กๆ ทิ้งไปเลย
+#  ตัดเส้นขยะเล็กๆ ทิ้งไปเลย
 MIN_CONTOUR_AREA = 50
 
-# ⭐️ ระยะห่างที่จะดูดเส้นเข้าหากัน (Pixel)
+# ระยะห่างที่จะดูดเส้นเข้าหากัน (Pixel)
 # เพิ่มเป็น 80 เพื่อให้เส้นที่ขาดช่วงไกลๆ เชื่อมกันได้ (ลดการยกปากกา)
 MERGE_DISTANCE_THRESHOLD = 1 
 
-# ⭐️ ความหนาแน่นของการถมดำ (3 = เร็วขึ้นมาก, 1 = ละเอียดช้า)
+# ความหนาแน่นของการถมดำ (3 = เร็วขึ้นมาก, 1 = ละเอียดช้า)
 FILL_DENSITY = 3
 
 # ขนาดพื้นที่ที่จะตัดสินว่าเป็น "ตา/จมูก"
@@ -54,7 +54,7 @@ EYE_AREA_MAX_THRESHOLD = 400
 
 # Preset Parameters: (Name, Blur, Block, C, Epsilon, MinArea)
 TEST_PARAMS = [
-    ("Smart Hybrid (Fast)", 3, 9, 4, 0.0020, 50),    # ⭐️ แนะนำอันนี้
+    ("Smart Hybrid (Fast)", 3, 9, 4, 0.0020, 50),
     ("Detail Focus", 3, 7, 2, 0.0010, 10),      
     ("Smooth Lines", 5, 11, 5, 0.0015, 20),    
     ("Thick Lines", 5, 15, 5, 0.0015, 25),    
@@ -99,16 +99,22 @@ def find_dobot_port():
                    "CP210" in p.description.upper() or \
                    "USB" in p.device.upper()
         if is_dobot:
-            print(f"✅ เลือกใช้ Port: {p.device}")
+            print(f" เลือกใช้ Port: {p.device}")
             return p.device
-    print("❌ ไม่พบ Port ที่เข้าข่าย")
+    print(" ไม่พบ Port ที่เข้าข่าย")
     return None
 
 def safe_move(bot, x, y, z, r=0, wait=True):
     for i in range(RETRY_ATTEMPTS):
         try:
-            bot.move_to(x, y, z, r, wait=wait)
-            return True
+            # For drawing operations, use wait=False to avoid blocking the thread too long
+            # This allows the Flask progress endpoint to respond
+            if not wait and i == 0:
+                bot.move_to(x, y, z, r, wait=False)
+                return True
+            else:
+                bot.move_to(x, y, z, r, wait=wait)
+                return True
         except Exception:
             time.sleep(0.1)
     return False
@@ -129,7 +135,7 @@ def get_next_experiment_dir():
     os.makedirs(os.path.join(new_exp_dir, 'all_steps'), exist_ok=True)
     os.makedirs(os.path.join(new_exp_dir, 'current_run'), exist_ok=True)
     
-    print(f"✅ สร้างโฟลเดอร์งานใหม่: {new_exp_dir}/")
+    print(f" สร้างโฟลเดอร์งานใหม่: {new_exp_dir}/")
     return new_exp_dir 
 
 def create_progress_image(base_img_bgr, filtered_contours, current_contour_index, is_final, 
@@ -155,7 +161,7 @@ def update_current_progress_image(base_img_bgr, filtered_contours, current_conto
         cv2.drawContours(preview, [filtered_contours[current_contour_index-1]], -1, (0, 255, 0), 2)
     cv2.imwrite(output_filename, preview)
 
-# --- ⭐️ Helper Functions ⭐️ ---
+# --- Helper Functions  ---
 
 def skeletonize(img):
     """บีบเส้นหนาๆ ให้เหลือแกนกลางเพียง 1 พิกเซล"""
@@ -338,7 +344,7 @@ def visualize_parameters(original_img_color, original_img_gray, test_params, out
     output_filename = os.path.join(output_dir, "parameter_comparison.jpg")
     plt.savefig(output_filename, dpi=200) 
     plt.close(fig) 
-    print(f"✅ บันทึกภาพเปรียบเทียบที่: {output_filename}")
+    print(f"บันทึกภาพเปรียบเทียบที่: {output_filename}")
     return output_filename 
 
 def get_eta_display(start_time, current_length_drawn, total_length_to_draw):
@@ -352,4 +358,4 @@ def get_eta_display(start_time, current_length_drawn, total_length_to_draw):
     elif current_length_drawn >= total_length_to_draw: return "ETA: Done"
     return "ETA: Calculating..."
 
-print("✅ dobot_drawing_logic.py loaded.")
+print("dobot_drawing_logic.py loaded.")
